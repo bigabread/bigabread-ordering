@@ -47,8 +47,7 @@ const db = firebase.firestore();
 
 let products = [];
 
-db.collection("products").get()
-.then(snapshot => {
+db.collection("products").get().then(snapshot => {
 
     const container = document.getElementById("products");
 
@@ -59,25 +58,20 @@ db.collection("products").get()
         products.push({
             id: p.recipeId,
             name: p.name,
-            price: Number(p.price)
+            price: p.price
         });
 
         container.innerHTML += `
-            <div style="margin-bottom:10px;">
-                <b>${p.name}</b> - $${p.price}
-                <input
-                    type="number"
-                    id="qty_${p.recipeId}"
-                    value="0"
-                    min="0"
-                    onchange="updateTotal()">
+            <div>
+                ${p.name} - $${p.price}
+                <input type="number"
+                       id="qty_${p.recipeId}"
+                       value="0"
+                       min="0"
+                       onchange="updateTotal()">
             </div>
         `;
     });
-})
-.catch(error => {
-    console.error(error);
-    alert("Failed to load products.");
 });
 
 function updateTotal() {
@@ -86,19 +80,14 @@ function updateTotal() {
 
     products.forEach(p => {
 
-        const element =
-            document.getElementById(
-                "qty_" + p.id
-            );
-
-        if (!element) return;
-
         const qty =
             parseFloat(
-                element.value
+                document.getElementById(
+                    "qty_" + p.id
+                ).value
             ) || 0;
 
-        total += qty * Number(p.price);
+        total += qty * p.price;
     });
 
     document.getElementById("total")
@@ -107,94 +96,67 @@ function updateTotal() {
 
 function submitOrder() {
 
-    const customerName =
-        document.getElementById(
-            "customerName"
-        ).value.trim();
-
-    const customerPhone =
-        document.getElementById(
-            "customerPhone"
-        ).value.trim();
-
-    if (customerName === "") {
-        alert("Please enter your name.");
-        return;
-    }
-
     const items = [];
 
     let total = 0;
 
     products.forEach(p => {
 
-        const element =
-            document.getElementById(
-                "qty_" + p.id
-            );
-
-        if (!element) return;
-
         const qty =
             parseFloat(
-                element.value
+                document.getElementById(
+                    "qty_" + p.id
+                ).value
             ) || 0;
 
-        if (qty > 0) {
+        if(qty > 0){
 
             items.push({
                 recipeId: p.id,
                 recipeName: p.name,
                 quantity: qty,
-                unitPrice: Number(p.price)
+                unitPrice: p.price
             });
 
-            total += qty * Number(p.price);
+            total += qty * p.price;
         }
     });
 
-    if (items.length === 0) {
-        alert("Please select at least one item.");
-        return;
-    }
+    db.collection("customer_orders")
+        .add({
 
-    console.log("Submitting Order");
-    console.log(items);
-    console.log(total);
+            customerName:
+                document.getElementById(
+                    "customerName"
+                ).value,
 
-  db.collection("products").get()
-.then(snapshot => {
+            customerPhone:
+                document.getElementById(
+                    "customerPhone"
+                ).value,
 
-    const container = document.getElementById("products");
+            orderType:
+                document.getElementById(
+                    "orderType"
+                ).value,
 
-    snapshot.forEach(doc => {
+            status: "PENDING",
 
-        const p = doc.data();
-        
-        // FIX: Use doc.id to ensure a guaranteed unique identifier 
-        // fallback to p.recipeId or p.id if you specifically mapped it that way
-        const productId = doc.id || p.recipeId || p.id; 
+            totalPrice: total,
 
-        products.push({
-            id: productId,
-            name: p.name,
-            price: Number(p.price)
+            orderDate: Date.now(),
+
+            items: items
+        })
+        .then(() => {
+
+            alert(
+                "Order submitted successfully!"
+            );
         });
+}
 
-        container.innerHTML += 
-            <div style="margin-bottom:10px;">
-                <b>${p.name}</b> - $${Number(p.price).toFixed(2)}
-                <input
-                    type="number"
-                    id="qty_${productId}"
-                    value="0"
-                    min="0"
-                    onchange="updateTotal()">
-            </div>
-        ;
-    });
-})
-.catch(error => {
-    console.error(error);
-    alert("Failed to load products.");
-});
+</script>
+
+</body>
+</html>
