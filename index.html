@@ -121,7 +121,9 @@ function submitOrder() {
             total += qty * p.price;
         }
     });
-
+console.log(items);
+console.log(total);
+    
     db.collection("customer_orders")
         .add({
 
