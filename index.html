@@ -162,70 +162,39 @@ function submitOrder() {
     console.log(items);
     console.log(total);
 
-    db.collection("customer_orders")
-    .add({
+   db.collection("products").get()
+.then(snapshot => {
 
-        customerName: customerName,
+    const container = document.getElementById("products");
 
-        customerPhone: customerPhone,
+    container.innerHTML = "";
+    products.length = 0;
 
-        orderType:
-            document.getElementById(
-                "orderType"
-            ).value,
+    snapshot.forEach(doc => {
 
-        status: "PENDING",
+        const p = doc.data();
+        const productId = doc.id;
 
-        paymentStatus: "UNPAID",
-
-        totalPrice: total,
-
-        orderDate: Date.now(),
-
-        pickupDate: Date.now(),
-
-        items: items
-
-    })
-    .then(() => {
-
-        alert("Order submitted successfully!");
-
-        document.getElementById(
-            "customerName"
-        ).value = "";
-
-        document.getElementById(
-            "customerPhone"
-        ).value = "";
-
-        products.forEach(p => {
-
-            const element =
-                document.getElementById(
-                    "qty_" + p.id
-                );
-
-            if (element) {
-                element.value = 0;
-            }
+        products.push({
+            id: productId,
+            name: p.name,
+            price: Number(p.price)
         });
 
-        updateTotal();
-
-    })
-    .catch(error => {
-
-        console.error(error);
-
-        alert(
-            "Order failed: " +
-            error.message
-        );
+        container.innerHTML += `
+            <div style="margin-bottom:10px;">
+                <b>${p.name}</b> - $${Number(p.price).toFixed(2)}
+                <input
+                    type="number"
+                    id="qty_${productId}"
+                    value="0"
+                    min="0"
+                    oninput="updateTotal()">
+            </div>
+        `;
     });
-}
-
-</script>
-
-</body>
-</html>
+})
+.catch(error => {
+    console.error(error);
+    alert("Failed to load products.");
+});
