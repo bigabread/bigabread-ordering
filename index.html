@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Big A Bread Online Ordering</title>
+
+```
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+```
+
+</head>
+<body>
+
+<h1>Big A Bread Online Ordering</h1>
+
+<label>Name:</label><br> <input type="text" id="customerName"><br><br>
+
+<label>Phone:</label><br> <input type="text" id="customerPhone"><br><br>
+
+<label>Order Type:</label><br> <select id="orderType"> <option value="PICKUP">Pickup</option> <option value="DELIVERY">Delivery</option> </select>
+
+<h2>Products</h2>
+
+<div id="products"></div>
+
+<h3>Total: $<span id="total">0.00</span></h3>
+
+<button onclick="submitOrder()">Place Order</button>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDJh97eKRt_p7HE84pctGp8METGhC2PJZQ",
+  authDomain: "bigabread-a8255.firebaseapp.com",
+  projectId: "bigabread-a8255",
+  storageBucket: "bigabread-a8255.firebasestorage.app",
+  messagingSenderId: "123358843211",
+  appId: "1:123358843211:web:0a4cdf04aa25bd2b6498ce"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+let products = [];
+
+db.collection("products").get().then(snapshot => {
+
+    const container = document.getElementById("products");
+
+    snapshot.forEach(doc => {
+
+        const p = doc.data();
+
+        products.push({
+            id: p.recipeId,
+            name: p.name,
+            price: p.price
+        });
+
+        container.innerHTML += `
+            <div>
+                ${p.name} - $${p.price}
+                <input type="number"
+                       id="qty_${p.recipeId}"
+                       value="0"
+                       min="0"
+                       onchange="updateTotal()">
+            </div>
+        `;
+    });
+});
+
+function updateTotal() {
+
+    let total = 0;
+
+    products.forEach(p => {
+
+        const qty =
+            parseFloat(
+                document.getElementById(
+                    "qty_" + p.id
+                ).value
+            ) || 0;
+
+        total += qty * p.price;
+    });
+
+    document.getElementById("total")
+        .innerText = total.toFixed(2);
+}
+
+function submitOrder() {
+
+    const items = [];
+
+    let total = 0;
+
+    products.forEach(p => {
+
+        const qty =
+            parseFloat(
+                document.getElementById(
+                    "qty_" + p.id
+                ).value
+            ) || 0;
+
+        if(qty > 0){
+
+            items.push({
+                recipeId: p.id,
+                recipeName: p.name,
+                quantity: qty,
+                unitPrice: p.price
+            });
+
+            total += qty * p.price;
+        }
+    });
+
+    db.collection("customer_orders")
+        .add({
+
+            customerName:
+                document.getElementById(
+                    "customerName"
+                ).value,
+
+            customerPhone:
+                document.getElementById(
+                    "customerPhone"
+                ).value,
+
+            orderType:
+                document.getElementById(
+                    "orderType"
+                ).value,
+
+            status: "PENDING",
+
+            totalPrice: total,
+
+            orderDate: Date.now(),
+
+            items: items
+        })
+        .then(() => {
+
+            alert(
+                "Order submitted successfully!"
+            );
+        });
+}
+
+</script>
+
+</body>
+</html>
