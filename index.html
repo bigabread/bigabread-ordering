@@ -162,18 +162,18 @@ function submitOrder() {
     console.log(items);
     console.log(total);
 
-   db.collection("products").get()
+  db.collection("products").get()
 .then(snapshot => {
 
     const container = document.getElementById("products");
 
-    container.innerHTML = "";
-    products.length = 0;
-
     snapshot.forEach(doc => {
 
         const p = doc.data();
-        const productId = doc.id;
+        
+        // FIX: Use doc.id to ensure a guaranteed unique identifier 
+        // fallback to p.recipeId or p.id if you specifically mapped it that way
+        const productId = doc.id || p.recipeId || p.id; 
 
         products.push({
             id: productId,
@@ -181,7 +181,7 @@ function submitOrder() {
             price: Number(p.price)
         });
 
-        container.innerHTML += `
+        container.innerHTML += 
             <div style="margin-bottom:10px;">
                 <b>${p.name}</b> - $${Number(p.price).toFixed(2)}
                 <input
@@ -189,9 +189,9 @@ function submitOrder() {
                     id="qty_${productId}"
                     value="0"
                     min="0"
-                    oninput="updateTotal()">
+                    onchange="updateTotal()">
             </div>
-        `;
+        ;
     });
 })
 .catch(error => {
